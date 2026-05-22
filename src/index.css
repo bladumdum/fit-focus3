@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  /* Palette Warna Utama */
+  --color-primary: #0a7d56; /* Hijau pekat (sisi kiri & tombol Masuk) */
+  --color-primary-hover: #086646;
+  --color-mascot: #a5deaa; /* Hijau muda pada karakter kotak */
+  --color-mascot-outline: #111827;
+  --color-accent-yellow: #fde047; /* Aksen bintang kuning */
+
+  /* Palette Background */
+  --color-bg-page: #f3f4f6; /* Latar abu-abu di luar container */
+  --color-bg-surface: #ffffff; /* Latar putih form login */
+  --color-bg-input: #f8fafc; /* Latar form input */
+
+  /* Typography Colors */
+  --color-text-main: #111827; /* Teks heading hitam pekat */
+  --color-text-muted: #6b7280; /* Teks sekunder, label, & placeholder */
+  --color-text-light: #ffffff; /* Teks putih di atas background hijau */
+
+  /* Border & Shapes */
+  --color-border-custom: #d1d5db;
+  --radius-card: 24px;
+  --radius-input: 12px;
+  --radius-button: 12px;
+}
+
+/* Base Styles */
+@layer base {
+  body {
+    @apply bg-bg-page text-text-main font-sans antialiased;
+  }
+}
+
+/* Custom Components */
+@layer components {
+  .card-container {
+    @apply flex w-full max-w-5xl bg-bg-surface rounded-card shadow-2xl overflow-hidden;
+  }
+
+  .input-field {
+    @apply w-full bg-bg-input border border-border-custom text-text-main placeholder-text-muted text-sm rounded-input p-3 pl-10 outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all;
+  }
+
+  .btn-primary {
+    @apply w-full bg-primary text-white font-semibold py-3 px-4 rounded-button transition-colors hover:bg-primary-hover shadow-md;
+  }
+}
