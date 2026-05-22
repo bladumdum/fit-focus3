@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import MascotAndLogo from "../../assets/icons/Mascot_and_Logo.svg";
 import mascotSvg from "../../assets/icons/mascot.svg";
 import smallMascot from "../../assets/icons/smallMascot.svg";
-import { User, Mail, Lock } from "lucide-react";
+import { User, Lock } from "lucide-react";
 import Input from "../../components/ui/Input";
+import { useUser } from "../../contexts/UserContext";
 
 // Label with left icon for each field
 function FieldLabel({ icon, text }) {
@@ -24,15 +25,10 @@ function FieldLabel({ icon, text }) {
 export default function UserAccount() {
   const navigate = useNavigate();
 
-  // Dummy user data — replace with real auth context/store later
-  const [form, setForm] = useState({
-    username: "@AlexKiboy",
-    email: "@AlexKiboy2130",
-    password: "**************",
-  });
+  const { user, updateUser } = useUser();
 
   const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    updateUser({ [e.target.name]: e.target.value });
   };
 
   return (
@@ -97,7 +93,7 @@ export default function UserAccount() {
               type="text"
               iconType="user"
               placeholder="Nama pengguna..."
-              value={form.username}
+              value={user.username}
               onChange={handleChange}
             />
           </div>
@@ -126,7 +122,7 @@ export default function UserAccount() {
               type="email"
               iconType="email"
               placeholder="Email..."
-              value={form.email}
+              value={user.email}
               onChange={handleChange}
             />
           </div>
@@ -143,7 +139,7 @@ export default function UserAccount() {
               type="password"
               iconType="password"
               placeholder="Password..."
-              value={form.password}
+              value={user.password || "**************"}
               onChange={handleChange}
             />
           </div>

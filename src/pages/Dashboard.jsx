@@ -1,14 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
 import PomodoroTimeOut from "../features/Pomodoro/PomodoroTimeOut";
 import PomodoroPopUp from "../features/Pomodoro/PomodoroPopUp";
 import smallMascot from "../assets/icons/smallMascot.svg";
-
-// ── Timer presets ─────────────────────────────────────────────────────────────
-const PRESETS = [
-  { id: "pomodoro", label: "Pomodoro", minutes: 25 },
-  { id: "short",    label: "Short Break", minutes: 5 },
-  { id: "long",     label: "Long Break", minutes: 15 },
-];
+import { useTimer } from "../contexts/TimerContext";
+import { useUser } from "../contexts/UserContext";
 
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60).toString().padStart(2, "0");
@@ -18,67 +13,31 @@ function formatTime(seconds) {
 
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 export default function Dashboard() {
-  // ── Timer state ──
-  const [preset, setPreset]           = useState(PRESETS[0]);
-  const [running, setRunning]         = useState(false);
-  const [remaining, setRemaining]     = useState(PRESETS[0].minutes * 60);
-  const [showTimeout, setShowTimeout] = useState(false);
-  const [showPopup, setShowPopup]     = useState(false);
-  const intervalRef                   = useRef(null);
+  const {
+    preset, setPreset,
+    running,
+    remaining,
+    showTimeout, setShowTimeout,
+    showPopup, setShowPopup,
+    handleStartPause, handleReset, handleFinishNow,
+    progress, nextBreakMin,
+    PRESETS
+  } = useTimer();
 
-  // Reset when preset changes
-  useEffect(() => {
-    clearInterval(intervalRef.current);
-    setRunning(false);
-    setRemaining(preset.minutes * 60);
-  }, [preset]);
-
-  // Countdown tick
-  useEffect(() => {
-    if (running) {
-      intervalRef.current = setInterval(() => {
-        setRemaining((r) => {
-          if (r <= 1) {
-            clearInterval(intervalRef.current);
-            setRunning(false);
-            setShowTimeout(true); // 🔔 trigger toast
-            return 0;
-          }
-          return r - 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(intervalRef.current);
-  }, [running]);
-
-  const total    = preset.minutes * 60;
-  const progress = 1 - remaining / total;           // 0 → 1
-
-  const handleStartPause = () => setRunning((r) => !r);
-  const handleReset      = () => {
-    clearInterval(intervalRef.current);
-    setRunning(false);
-    setRemaining(preset.minutes * 60);
-  };
-  // 🧪 Test button — completes the timer immediately
-  const handleFinishNow  = () => {
-    clearInterval(intervalRef.current);
-    setRunning(false);
-    setRemaining(0);
-    setShowTimeout(true);
-  };
-
-  // Next break text
-  const nextBreakMin = Math.ceil(remaining / 60);
+  const { user } = useUser();
 
   return (
     <div className="flex flex-col gap-6 max-w-6xl mx-auto" style={{ fontFamily: "'Nunito', sans-serif" }}>
       {/* Header Profile */}
       <div className="flex items-center gap-4 mb-2">
         <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-black">
-          <img src={smallMascot} alt="mascot" className="w-full h-full object-contain bg-[#90d2a4]" />
+          {user.avatar ? (
+            <img src={user.avatar} alt="avatar" className="w-full h-full object-cover" />
+          ) : (
+            <img src={smallMascot} alt="mascot" className="w-full h-full object-contain bg-[#90d2a4]" />
+          )}
         </div>
-        <h1 className="text-3xl font-bold text-[#1F4B3F]">Halo, Alex!</h1>
+        <h1 className="text-3xl font-bold text-[#1F4B3F]">Halo, {user.name}!</h1>
       </div>
 
       {/* Main Grid Layout */}

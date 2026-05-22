@@ -3,6 +3,7 @@ import RootLayout from "../layouts/RootLayout";
 import RegisterPage from "../features/auth/Register";
 import LoginPage from "../features/auth/Login";
 import PemilihanMood from "../features/mood/PemilihanMood";
+import DeteksiMood from "../features/mood/DeteksiMood";
 import Dashboard from "../pages/Dashboard";
 import PengaturanPage from "../pages/PengaturanPage";
 import UserAccount from "../pages/settings/UserAccount";
@@ -25,6 +26,7 @@ export const router = createBrowserRouter([
     ],
   },
   // Standalone pages (no sidebar)
+  { path: "/deteksi-mood", element: <DeteksiMood /> },
   { path: "/pengaturan/akun", element: <UserAccount /> },
   { path: "/pengaturan/bahasa", element: <BahasadanNotifPage /> },
 ]);
