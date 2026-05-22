@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getFicoStreamResponse } from "./geminiService.js";
 
 dotenv.config();
 
@@ -93,6 +94,49 @@ ${userMessage}
     res.status(500).json({
       error: "Internal server error",
     });
+  }
+});
+
+// SSE streaming endpoint that uses getFicoStreamResponse to stream chunks
+app.post("/api/stream", async (req, res) => {
+  try {
+    const { prompt } = req.body;
+    if (!prompt) return res.status(400).json({ error: "Missing prompt" });
+
+    // Set headers for Server-Sent Events
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders?.();
+
+    const onChunk = (chunk) => {
+      if (chunk === null) {
+        // done
+        res.write(`event: done\ndata: {}\n\n`);
+        res.end();
+        return;
+      }
+      // send chunk as JSON-safe string
+      const payload = { chunk };
+      res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    };
+
+    // handle client abort
+    req.on("close", () => {
+      try {
+        res.end();
+      } catch (e) { }
+    });
+
+    await getFicoStreamResponse(prompt, onChunk);
+  } catch (error) {
+    console.error("Stream error:", error);
+    try {
+      res.write(`event: error\ndata: ${JSON.stringify({ error: error.message || String(error) })}\n\n`);
+      res.end();
+    } catch (e) {
+      // ignore
+    }
   }
 });
 
