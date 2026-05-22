@@ -1,0 +1,12 @@
+Letakkan file video relaksasi stretching di sini.
+Format yang didukung: .mp4, .webm
+
+Contoh penamaan file:
+  - relaksasi_stretching.mp4
+  - stretching_video.mp4
+
+Gunakan path di PomodoroPopUp.jsx:
+  import relaxVideo from "../../assets/videos/relaksasi_stretching.mp4";
+
+Kemudian pada elemen <video>:
+  <video src={relaxVideo} ... />

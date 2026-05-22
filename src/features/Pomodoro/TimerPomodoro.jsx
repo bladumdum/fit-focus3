@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import Button from "../../components/ui/Button";
+import PomodoroTimeOut from "./PomodoroTimeOut";
 
 const PRESETS = [
 	{ id: "pomodoro", label: "Pomodoro", minutes: 25 },
@@ -21,6 +22,7 @@ export default function TimerPomodoro() {
 	const [preset, setPreset] = useState(PRESETS[0]);
 	const [running, setRunning] = useState(false);
 	const [remaining, setRemaining] = useState(preset.minutes * 60);
+	const [showTimeout, setShowTimeout] = useState(false);
 	const intervalRef = useRef(null);
 
 	// when preset changes, reset timer
@@ -36,6 +38,7 @@ export default function TimerPomodoro() {
 					if (r <= 1) {
 						clearInterval(intervalRef.current);
 						setRunning(false);
+						setShowTimeout(true); // 🔔 trigger notification
 						return 0;
 					}
 					return r - 1;
@@ -107,6 +110,12 @@ export default function TimerPomodoro() {
 					</div>
 				</main>
 			</div>
+
+			{/* Timeout toast notification */}
+			<PomodoroTimeOut
+				visible={showTimeout}
+				onClose={() => setShowTimeout(false)}
+			/>
 		</div>
 	);
 }

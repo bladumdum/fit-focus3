@@ -72,7 +72,12 @@ export default function FicoAssistant() {
         setTimeout(() => {
             setIsTyping(false);
             const responses = [
-                "Aku Gay",
+                "Halo! Aku Fico, senang bisa membantu kamu 😊 Ada yang ingin kamu ceritakan?",
+                "Ingat, istirahat yang cukup sangat penting untuk kesehatan kamu! 💚",
+                "Sudah minum air hari ini? Minimal 8 gelas ya! 💧",
+                "Kamu hebat sudah meluangkan waktu untuk peduli pada diri sendiri! ⭐",
+                "Tips kesehatan: Jalan kaki 30 menit sehari bisa meningkatkan mood kamu lho!",
+                "Cerita lebih banyak ke aku, aku siap mendengarkan! 🤗",
             ];
             const reply = responses[Math.floor(Math.random() * responses.length)];
             setMessages((prev) => [...prev, { text: reply, isUser: false }]);
