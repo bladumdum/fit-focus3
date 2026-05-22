@@ -105,7 +105,7 @@ ${userMessage}
 // SSE streaming endpoint that uses getFicoStreamResponse to stream chunks
 app.post("/api/stream", async (req, res) => {
   try {
-    const { prompt } = req.body;
+    const { prompt, userContext } = req.body;
     if (!prompt) return res.status(400).json({ error: "Missing prompt" });
 
     // Set headers for Server-Sent Events
@@ -133,7 +133,7 @@ app.post("/api/stream", async (req, res) => {
       } catch (e) { }
     });
 
-    await getFicoStreamResponse(prompt, onChunk);
+    await getFicoStreamResponse(prompt, onChunk, userContext);
   } catch (error) {
     console.error("Stream error:", error);
     try {

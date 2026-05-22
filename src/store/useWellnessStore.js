@@ -1,4 +1,4 @@
-import create from "zustand";
+import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 const getToday = () => new Date().toISOString().slice(0, 10);
@@ -44,8 +44,18 @@ const useWellnessStore = create(
 		}),
 		{
 			name: "wellness-storage",
-			getStorage: () =>
-				typeof window !== "undefined" ? window.localStorage : undefined,
+			storage:
+				typeof window !== "undefined"
+					? {
+							getItem: (key) => {
+								const val = window.localStorage.getItem(key);
+								return val ? JSON.parse(val) : null;
+							},
+							setItem: (key, val) =>
+								window.localStorage.setItem(key, JSON.stringify(val)),
+							removeItem: (key) => window.localStorage.removeItem(key),
+					  }
+					: undefined,
 		}
 	)
 );

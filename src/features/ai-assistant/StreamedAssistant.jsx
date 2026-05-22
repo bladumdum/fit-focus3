@@ -1,6 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import mascotSvg from "../../assets/icons/mascot.svg";
 
+// Context & Store imports
+import { useMood } from "../../contexts/MoodContext";
+import { useTimer } from "../../contexts/TimerContext";
+import { useApp } from "../../contexts/AppContext";
+import useWellnessStore from "../../store/useWellnessStore";
+
 // ── Send Icon ─────────────────────────────────────────────────────────────────
 function SendIcon() {
   return (
@@ -21,31 +27,124 @@ function SendIcon() {
   );
 }
 
+// ── Quick Suggestion Chips ─────────────────────────────────────────────────────
+const SUGGESTION_CHIPS = [
+  { emoji: "💧", label: "Tips Hidrasi",   prompt: "Berikan tips agar aku lebih rajin minum air putih hari ini." },
+  { emoji: "🧘", label: "Tips Fokus",     prompt: "Aku susah fokus, bantu aku dengan tips meningkatkan konsentrasi." },
+  { emoji: "😤", label: "Atasi Stress",   prompt: "Aku lagi stress banget, ada tips untuk menenangkan diri?" },
+  { emoji: "⏱️", label: "Jadwal Pomodoro", prompt: "Bantu aku buat jadwal sesi Pomodoro yang produktif hari ini." },
+  { emoji: "🌙", label: "Perbaiki Tidur", prompt: "Aku kurang tidur, apa yang harus aku lakukan supaya lebih berenergi?" },
+  { emoji: "✅", label: "Prioritas Tugas", prompt: "Bantu aku menentukan prioritas tugas yang harus dikerjakan duluan." },
+];
+
+// ── Markdown-lite renderer (bold & newline) ────────────────────────────────────
+function renderText(text) {
+  if (!text) return null;
+  // Split on **bold** markers
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    // Render newlines as <br/>
+    return part.split("\n").map((line, j, arr) => (
+      <span key={`${i}-${j}`}>
+        {line}
+        {j < arr.length - 1 && <br />}
+      </span>
+    ));
+  });
+}
+
+const INITIAL_MESSAGE = [
+  {
+    text: "Halo! Aku Fico, asisten AI kamu dari Fit-Focus 😊 Ada yang ingin kamu ceritakan atau butuh tips produktivitas hari ini?",
+    isUser: false,
+  },
+];
+
+const SESSION_KEY = "fico_chat_messages";
+
+/** Restore messages dari sessionStorage, atau pakai pesan awal */
+function loadMessages() {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (_) {}
+  return INITIAL_MESSAGE;
+}
+
 export default function StreamedAssistant() {
   const [input, setInput] = useState("");
-  // Inisialisasi percakapan awal
-  const [messages, setMessages] = useState([
-    {
-      text: "Halo! Aku Fico, asisten AI kamu dari Fit-Focus 😊 Ada yang ingin kamu ceritakan atau butuh tips produktivitas hari ini?",
-      isUser: false,
-    }
-  ]);
+  const [messages, setMessages] = useState(loadMessages);
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef(null);
 
-  // Auto-scroll to bottom
+  // ── Baca semua konteks fitur aplikasi ─────────────────────────────────────
+  // Mood — utamakan wellnessStore (persisted ke localStorage), fallback MoodContext
+  const { mood: moodCtx } = useMood();
+  const wellnessMood = useWellnessStore((s) => s.currentMood);
+
+  // Timer (Pomodoro)
+  const { preset, running, remaining } = useTimer();
+
+  // App Context (todo, sessions)
+  const { todos, timerSessions } = useApp();
+
+  // Wellness store (hidrasi, tidur)
+  const waterIntake = useWellnessStore((s) => s.waterIntake);
+  const sleepHours  = useWellnessStore((s) => s.sleepHours);
+
+  // ── Simpan messages ke sessionStorage setiap kali berubah ─────────────────
+  useEffect(() => {
+    try {
+      // Jangan simpan pesan yang masih streaming (text kosong di akhir)
+      const toSave = messages.filter((m, i) =>
+        !(i === messages.length - 1 && !m.isUser && m.text === "")
+      );
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(toSave));
+    } catch (_) {}
+  }, [messages]);
+
+  // ── Bangun objek userContext dari semua data tersebut ─────────────────────
+  function buildUserContext() {
+    const todoDone   = todos.filter((t) => t.done).length;
+    const todoTotal  = todos.length;
+    const todoTitles = todos.slice(0, 5).map((t) => t.title);
+
+    // Mood: wellnessStore (persisted) lebih andal daripada in-memory MoodContext
+    const resolvedMood = wellnessMood ?? moodCtx?.today ?? null;
+
+    return {
+      mood:              resolvedMood,
+      waterIntake,
+      waterGoal:         8,
+      sleepHours,
+      timerSessions:     timerSessions ?? 0,
+      timerPreset:       preset?.label ?? "Pomodoro",
+      timerRunning:      running,
+      timerRemainingMin: Math.ceil(remaining / 60),
+      todoDone,
+      todoTotal,
+      todoTitles,
+    };
+  }
+
+  // Auto-scroll ke bawah
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  const handleSend = async () => {
-    const prompt = input.trim();
+  const handleSend = async (overridePrompt) => {
+    const prompt = (overridePrompt ?? input).trim();
     if (!prompt || loading) return;
 
     setInput("");
     setLoading(true);
 
-    // Tambah pesan user dan siapkan wadah kosong untuk respon Fico
     setMessages((prev) => [
       ...prev,
       { text: prompt, isUser: true },
@@ -53,19 +152,19 @@ export default function StreamedAssistant() {
     ]);
 
     try {
-      // Memanggil backend lokal
+      const userContext = buildUserContext();
+
       const response = await fetch("http://localhost:3000/api/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ prompt, userContext }),
       });
 
       if (!response.ok) throw new Error("Gagal terhubung ke server backend");
 
-      const reader = response.body.getReader();
+      const reader  = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
 
-      // Membaca stream chunk dari backend
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
@@ -79,24 +178,20 @@ export default function StreamedAssistant() {
             if (!dataStr || dataStr === "{}") continue;
 
             let parsedData;
-            
-            // 1. Coba parse JSON-nya dulu
             try {
               parsedData = JSON.parse(dataStr);
             } catch (err) {
               console.error("Gagal parsing JSON stream:", err);
-              continue; // Lewati baris ini jika JSON rusak
+              continue;
             }
 
-            // 2. Jika ada error dari backend, lempar ke catch utama!
             if (parsedData.error) {
               throw new Error(parsedData.error);
-            } 
-            
-            // 3. Jika berhasil mendapat chunk, masukkan ke pesan
+            }
+
             if (parsedData.chunk) {
               setMessages((prev) => {
-                const copy = [...prev];
+                const copy    = [...prev];
                 const lastIdx = copy.length - 1;
                 copy[lastIdx] = {
                   ...copy[lastIdx],
@@ -111,7 +206,7 @@ export default function StreamedAssistant() {
     } catch (err) {
       console.error("Streaming error:", err);
       setMessages((prev) => {
-        const copy = [...prev];
+        const copy    = [...prev];
         const lastIdx = copy.length - 1;
         copy[lastIdx] = {
           ...copy[lastIdx],
@@ -135,6 +230,8 @@ export default function StreamedAssistant() {
 
   return (
     <div className="flex flex-col h-full bg-transparent" style={{ fontFamily: "'Nunito', sans-serif" }}>
+
+      {/* ── Empty state ─────────────────────────────────────────────────────── */}
       {isEmpty && (
         <div className="flex flex-col items-center justify-center flex-1 pb-32 select-none animate-fade-in">
           <h1 className="text-2xl font-bold text-gray-800 mb-10 text-center">
@@ -146,6 +243,7 @@ export default function StreamedAssistant() {
         </div>
       )}
 
+      {/* ── Chat messages ────────────────────────────────────────────────────── */}
       {!isEmpty && (
         <div className="flex-1 overflow-y-auto px-2 py-4 pb-6">
           <p className="text-center text-sm font-semibold text-gray-400 mb-6">
@@ -166,11 +264,12 @@ export default function StreamedAssistant() {
                     : "bg-white text-gray-700 rounded-bl-none border border-gray-100"
                   }`}
               >
-                {m.text}
+                {m.isUser ? m.text : renderText(m.text)}
               </div>
             </div>
           ))}
 
+          {/* Typing indicator */}
           {loading && messages[messages.length - 1]?.text === "" && (
             <div className="flex justify-start mb-3 animate-fade-in">
               <div className="shrink-0 w-8 h-8 mr-2 mt-1">
@@ -187,7 +286,26 @@ export default function StreamedAssistant() {
         </div>
       )}
 
-      <div className="flex items-center gap-3 pt-4 pb-2 mt-auto">
+      {/* ── Quick Suggestion Chips ───────────────────────────────────────────── */}
+      {!loading && (
+        <div className="flex flex-wrap gap-2 px-1 pb-3 mt-auto">
+          {SUGGESTION_CHIPS.map((chip) => (
+            <button
+              key={chip.label}
+              id={`chip-${chip.label.toLowerCase().replace(/\s+/g, "-")}`}
+              onClick={() => handleSend(chip.prompt)}
+              disabled={loading}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-gray-200 text-xs font-semibold text-gray-600 shadow-sm hover:bg-[#006A4E] hover:text-white hover:border-[#006A4E] transition-all duration-200 active:scale-95 disabled:opacity-40"
+            >
+              <span>{chip.emoji}</span>
+              <span>{chip.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── Input bar ────────────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 pt-2 pb-2">
         <div className="flex-1">
           <input
             type="text"
@@ -201,7 +319,7 @@ export default function StreamedAssistant() {
         </div>
 
         <button
-          onClick={handleSend}
+          onClick={() => handleSend()}
           disabled={!input.trim() || loading}
           className="shrink-0 w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 shadow-sm hover:bg-[#006A4E] hover:text-white hover:border-[#006A4E] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
         >

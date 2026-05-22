@@ -6,6 +6,8 @@ import biasa from "../../assets/icons/Biasa Aja Emot.svg";
 import lelah from "../../assets/icons/Lelah Emot.svg";
 import { useNavigate } from "react-router-dom";
 import stress from "../../assets/icons/Stress Emot.svg";
+import useWellnessStore from "../../store/useWellnessStore";
+import { useMood } from "../../contexts/MoodContext";
 
 const MOODS = [
   { id: "semangat", label: "Semangat", icon: semangat },
@@ -18,14 +20,17 @@ export default function PemilihanMood() {
   const [selected, setSelected] = useState(null);
 
   const navigate = useNavigate();
+  const setMoodStore  = useWellnessStore((s) => s.setMood);
+  const { setTodayMood } = useMood();
 
   const handleConfirm = () => {
     if (!selected) return;
 
-    console.log("Selected mood:", selected);
-
-    localStorage.setItem("selected_mood", selected);
-
+    // Simpan ke store yang terpersist (dibaca oleh AI assistant)
+    setMoodStore(selected);
+    // Sync ke in-memory MoodContext juga
+    setTodayMood(selected);
+    // Flag untuk ProtectedRoute agar mengizinkan akses ke dashboard
     localStorage.setItem("mood_selected", "true");
 
     navigate("/");

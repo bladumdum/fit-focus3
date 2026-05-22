@@ -1,4 +1,4 @@
-import create from "zustand";
+import { create } from "zustand";
 
 // Simple Pomodoro store using Zustand.
 // - Uses an `endTimestamp` so the timer keeps counting even when components unmount.

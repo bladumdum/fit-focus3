@@ -1,4 +1,4 @@
-import create from "zustand";
+import { create } from "zustand";
 
 // useUserStore — simple auth/profile store using Zustand
 // State:
