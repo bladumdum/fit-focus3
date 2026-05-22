@@ -1,13 +1,16 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import Mascot from "../../assets/icons/mascot.svg";
 import smallMascot from "../../assets/icons/smallMascot.svg";
+import { useEffect } from "react";
 
 // Jika Anda meletakkan logo/maskot di folder assets
 // import logoFitFocus from '../assets/logo-fitfocus.png';
 
 const LoginPage = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -22,11 +25,36 @@ const LoginPage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const isLogin = async (e) => {
     e.preventDefault();
-    console.log("Data Login:", formData);
-    // Jalankan logika autentikasi atau arahkan ke halaman Mood Selection di sini
+
+    try {
+      // simulasi login sukses
+      const fakeToken = "fitfocus_token_123";
+
+      // simpan token
+      localStorage.setItem("token", fakeToken);
+
+      console.log("Login berhasil");
+
+      // pindah ke dashboard
+      navigate("/pemilihan-mood");
+    } catch (error) {
+      console.log(error);
+    }
   };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    const moodSelected = localStorage.getItem("mood_selected");
+
+    if (token && moodSelected === "true") {
+      navigate("/");
+    } else if (token) {
+      navigate("/pemilihan-mood");
+    }
+  }, []);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-[#f9f9e0]">
@@ -72,7 +100,7 @@ const LoginPage = () => {
           </div>
 
           {/* Form Utama */}
-          <form onSubmit={handleSubmit} className="space-y-1">
+          <form onSubmit={isLogin} className="space-y-1">
             {/* Input Username */}
             <Input
               type="text"
@@ -122,11 +150,11 @@ const LoginPage = () => {
           {/* Footer Form (Daftar Akun Baru) */}
           <p className="text-xs text-center text-gray-600 mt-8 font-medium">
             Tidak punya akun ?{" "}
-            <a
-              href="#daftar"
+            <Link
+              to="/register"
               className="text-[#007953] font-semibold hover:underline transition-all">
               Daftar
-            </a>
+            </Link>
           </p>
         </div>
       </div>

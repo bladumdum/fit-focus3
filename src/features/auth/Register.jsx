@@ -3,8 +3,25 @@ import Input from "../../components/ui/Input";
 import mascot from "../../assets/icons/mascot.svg";
 import smallMascot from "../../assets/icons/mascot.svg";
 import Button from "../../components/ui/Button";
+import { useNavigate, Link } from "react-router-dom";
 
 const RegisterPage = () => {
+  const navigate = useNavigate();
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    console.log("Data Registrasi:", formData);
+
+    const fakeToken = "fitfocus_token_123";
+
+    localStorage.setItem("token", fakeToken);
+
+    localStorage.setItem("mood_selected", "false");
+
+    navigate("/pemilihan-mood");
+  };
+
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -17,12 +34,6 @@ const RegisterPage = () => {
       ...prev,
       [name]: value,
     }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Data Registrasi:", formData);
-    // Jalankan logika pendaftaran akun di sini
   };
 
   return (
@@ -110,11 +121,11 @@ const RegisterPage = () => {
           {/* Footer Form (Navigasi Kembali ke Login) */}
           <p className="text-xs text-center text-gray-600 mt-8 font-medium">
             Sudah punya akun ?{" "}
-            <a
-              href="#masuk"
+            <Link
+              to="/login"
               className="text-[#007953] font-semibold hover:underline transition-all">
               Masuk
-            </a>
+            </Link>
           </p>
         </div>
       </div>
