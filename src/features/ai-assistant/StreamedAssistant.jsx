@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import mascotSvg from "../../assets/icons/mascot.svg";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // ── Send Icon ─────────────────────────────────────────────────────────────────
 function SendIcon() {
@@ -22,44 +21,19 @@ function SendIcon() {
   );
 }
 
-// Initialize Gemini
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null;
-const model = genAI ? genAI.getGenerativeModel({
-  model: "gemini-2.5-flash",
-  systemInstruction: "Kamu adalah Fico, asisten virtual kesehatan, mood, dan produktivitas dari aplikasi Fit-Focus. Fico itu ramah, penuh semangat, dan berempati. Gunakan bahasa Indonesia yang asik, santai tapi sopan, layaknya teman curhat. Berikan saran yang praktis, suportif, dan selalu gunakan emoticon. Hindari jawaban yang terlalu panjang seperti robot, jadilah se-manusiawi dan senatural mungkin.",
-}) : null;
-
 export default function StreamedAssistant() {
-  const [streaming, setStreaming] = useState(false);
-  setStreaming(true);
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState([]);
+  // Inisialisasi percakapan awal
+  const [messages, setMessages] = useState([
+    {
+      text: "Halo! Aku Fico, asisten AI kamu dari Fit-Focus 😊 Ada yang ingin kamu ceritakan atau butuh tips produktivitas hari ini?",
+      isUser: false,
+    }
+  ]);
   const [loading, setLoading] = useState(false);
-  const [chatSession, setChatSession] = useState(null);
-
-  const abortRef = useRef(null);
   const chatEndRef = useRef(null);
 
-  // Initialize chat session on mount
-  useEffect(() => {
-    if (model) {
-      setChatSession(model.startChat({
-        history: [
-          {
-            role: "user",
-            parts: [{ text: "Halo Fico!" }]
-          },
-          {
-            role: "model",
-            parts: [{ text: "Halo! Aku Fico, asisten AI kamu dari Fit-Focus 😊 Ada yang ingin kamu ceritakan atau butuh tips produktivitas hari ini?" }]
-          }
-        ],
-      }));
-    }
-  }, []);
-
-  // Auto-scroll to bottom on new messages
+  // Auto-scroll to bottom
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
@@ -68,69 +42,85 @@ export default function StreamedAssistant() {
     const prompt = input.trim();
     if (!prompt || loading) return;
 
-    // reset input + aktifkan loading
     setInput("");
     setLoading(true);
 
-    // tambah user message + placeholder AI
-    setMessages((m) => [
-      ...m,
+    // Tambah pesan user dan siapkan wadah kosong untuk respon Fico
+    setMessages((prev) => [
+      ...prev,
       { text: prompt, isUser: true },
       { text: "", isUser: false },
     ]);
 
-    if (!API_KEY || !chatSession) {
-      setLoading(false);
-
-      setMessages((prev) => {
-        const copy = [...prev];
-        copy[copy.length - 1] = {
-          text: "Ups! API key Gemini belum dikonfigurasi 😅",
-          isUser: false,
-        };
-        return copy;
+    try {
+      // Memanggil backend lokal
+      const response = await fetch("http://localhost:3000/api/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
       });
 
-      return;
-    }
+      if (!response.ok) throw new Error("Gagal terhubung ke server backend");
 
-    try {
-      const result = await chatSession.sendMessageStream(prompt);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
 
-      for await (const chunk of result.stream) {
-        const chunkText = chunk.text();
+      // Membaca stream chunk dari backend
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
 
-        setMessages((prev) => {
-          const copy = [...prev];
+        const chunkText = decoder.decode(value, { stream: true });
+        const lines = chunkText.split("\n");
 
-          // cari message AI terakhir
-          const lastIdx = copy.length - 1;
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const dataStr = line.replace("data: ", "").trim();
+            if (!dataStr || dataStr === "{}") continue;
 
-          copy[lastIdx] = {
-            ...copy[lastIdx],
-            text: (copy[lastIdx].text || "") + chunkText,
-          };
+            let parsedData;
+            
+            // 1. Coba parse JSON-nya dulu
+            try {
+              parsedData = JSON.parse(dataStr);
+            } catch (err) {
+              console.error("Gagal parsing JSON stream:", err);
+              continue; // Lewati baris ini jika JSON rusak
+            }
 
-          return [...copy];
-        });
+            // 2. Jika ada error dari backend, lempar ke catch utama!
+            if (parsedData.error) {
+              throw new Error(parsedData.error);
+            } 
+            
+            // 3. Jika berhasil mendapat chunk, masukkan ke pesan
+            if (parsedData.chunk) {
+              setMessages((prev) => {
+                const copy = [...prev];
+                const lastIdx = copy.length - 1;
+                copy[lastIdx] = {
+                  ...copy[lastIdx],
+                  text: (copy[lastIdx].text || "") + parsedData.chunk,
+                };
+                return copy;
+              });
+            }
+          }
+        }
       }
     } catch (err) {
-      console.error("Gemini stream error:", err);
-
+      console.error("Streaming error:", err);
       setMessages((prev) => {
         const copy = [...prev];
         const lastIdx = copy.length - 1;
-
         copy[lastIdx] = {
           ...copy[lastIdx],
-          text: "Maaf ya, Fico lagi error 🤕 Coba lagi sebentar ya!",
+          text: "Maaf ya, server backend Fico lagi error 🤕 Coba lagi sebentar ya!",
         };
-
-        return [...copy];
+        return copy;
       });
     } finally {
       setLoading(false);
-      setStreaming(false);
     }
   };
 
@@ -145,7 +135,6 @@ export default function StreamedAssistant() {
 
   return (
     <div className="flex flex-col h-full bg-transparent" style={{ fontFamily: "'Nunito', sans-serif" }}>
-      {/* ── Empty state: greeting + large mascot ── */}
       {isEmpty && (
         <div className="flex flex-col items-center justify-center flex-1 pb-32 select-none animate-fade-in">
           <h1 className="text-2xl font-bold text-gray-800 mb-10 text-center">
@@ -157,7 +146,6 @@ export default function StreamedAssistant() {
         </div>
       )}
 
-      {/* ── Chat history ── */}
       {!isEmpty && (
         <div className="flex-1 overflow-y-auto px-2 py-4 pb-6">
           <p className="text-center text-sm font-semibold text-gray-400 mb-6">
@@ -183,7 +171,6 @@ export default function StreamedAssistant() {
             </div>
           ))}
 
-          {/* Typing indicator */}
           {loading && messages[messages.length - 1]?.text === "" && (
             <div className="flex justify-start mb-3 animate-fade-in">
               <div className="shrink-0 w-8 h-8 mr-2 mt-1">
@@ -200,7 +187,6 @@ export default function StreamedAssistant() {
         </div>
       )}
 
-      {/* ── Input Bar ── */}
       <div className="flex items-center gap-3 pt-4 pb-2 mt-auto">
         <div className="flex-1">
           <input

@@ -1,15 +1,14 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Prefer Vite-style env var if provided, fall back to GEMINI_API_KEY
-const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-const genAI = new GoogleGenerativeAI(apiKey);
-
-// getFicoStreamResponse(prompt, onChunk)
-// - prompt: string (user message)
-// - onChunk: function called for each chunk: onChunk(chunk) where chunk is string
-// The implementation uses the SDK to generate a full response then streams
-// it in small chunks via the onChunk callback to emulate streaming behavior.
 export async function getFicoStreamResponse(userPrompt, onChunk) {
+  // Pindahkan pemanggilan env dan inisiasi AI ke dalam fungsi ini
+  // Saat fungsi ini dipanggil, dotenv di index.js sudah selesai berjalan
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.warn("⚠️  GEMINI_API_KEY not set in server/.env");
+  }
+  const genAI = new GoogleGenerativeAI(apiKey);
+
   const systemInstruction = `Kamu adalah Fico — asisten pendamping fokus dan kesehatan yang ramah. Gunakan bahasa Indonesia, jawaban singkat, jelas, dan penuh empati. Berikan saran praktis untuk fokus, hidrasi, dan istirahat jika relevan.`;
 
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });

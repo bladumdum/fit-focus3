@@ -1,11 +1,16 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 import rateLimit from "express-rate-limit";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getFicoStreamResponse } from "./geminiService.js";
 
-dotenv.config();
+// Load .env from server directory
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.join(__dirname, ".env") });
+console.log("✓ Loaded API key:", process.env.GEMINI_API_KEY ? "✓ Present" : "✗ Missing");
 
 const app = express();
 
