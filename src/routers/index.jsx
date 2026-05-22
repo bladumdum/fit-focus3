@@ -1,16 +1,27 @@
 import { createBrowserRouter } from "react-router-dom";
 import RootLayout from "../layouts/RootLayout";
-import LoginPage from "../pages/LoginPage";
-import RegisterPage from "../pages/RegisterPage";
-import MoodSelectionPage from "../pages/MoodSelectionPage";
+import RegisterPage from "../features/auth/Register";
+import LoginPage from "../features/auth/Login";
+import PemilihanMood from "../features/mood/PemilihanMood";
+import IndexPage from "../pages/index";
+import PengaturanPage from "../pages/PengaturanPage";
+import UserAccount from "../pages/settings/UserAccount";
+import BahasadanNotifPage from "../pages/settings/BahasadanNotifPage";
+import FicoAssistant from "../features/ai-assistant/FicoAssistant";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <RootLayout />,
     children: [
-      { index: true, element: <MoodSelectionPage /> },
-      { path: "/login", element: <RegisterPage /> },
+      { index: true, element: <FicoAssistant /> },
+      { path: "/login", element: <LoginPage /> },
+      { path: "/pengaturan", element: <PengaturanPage /> },
+      { path: "/asisten", element: <FicoAssistant /> },
     ],
   },
+  // Standalone pages (no sidebar)
+  { path: "/pengaturan/akun", element: <UserAccount /> },
+  { path: "/pengaturan/bahasa", element: <BahasadanNotifPage /> },
 ]);
+

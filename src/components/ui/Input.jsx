@@ -7,58 +7,62 @@ const Input = ({
   value,
   onChange,
   name,
-  iconType, // 'user' atau 'password'
+  id,
+  iconType, // 'user' | 'email' | 'password'
+  readOnly = false,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
 
-  // Menentukan ikon kiri berdasarkan prop iconType
+  // Left icon based on iconType
   const renderLeftIcon = () => {
-    if (iconType === "user") {
-      return <User className="w-5 h-5 text-gray-400" />;
-    }
-    if (iconType === "email") {
-      return <Mail className="w-5 h-5 text-gray-400" />;
-    }
-    if (iconType === "password") {
-      return <Lock className="w-5 h-5 text-gray-400" />;
-    }
+    if (iconType === "user") return <User className="w-5 h-5 text-gray-400" />;
+    if (iconType === "email") return <Mail className="w-5 h-5 text-gray-400" />;
+    if (iconType === "password") return <Lock className="w-5 h-5 text-gray-400" />;
     return null;
   };
 
-  // Menentukan tipe input aktual (khusus untuk password toggle)
   const inputType = type === "password" && showPassword ? "text" : type;
 
   return (
-    <div className="relative w-full mb-4">
-      {/* Ikon Sisi Kiri */}
+    <div className="relative w-full">
+      {/* Left Icon */}
       {iconType && (
-        <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+        <div className="absolute inset-y-0 left-0 flex items-center pl-5 pointer-events-none">
           {renderLeftIcon()}
         </div>
       )}
 
-      {/* Elemen Input Utama */}
+      {/* Input Element */}
       <input
+        id={id}
         type={inputType}
         name={name}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`w-full py-3.5 bg-[#f4f7fa] text-gray-700 placeholder-gray-400 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#007953] focus:border-transparent transition-all duration-200
-          ${iconType ? "pl-12" : "pl-4"} 
-          ${type === "password" ? "pr-12" : "pr-4"}`}
+        readOnly={readOnly}
+        className={`
+          w-full py-3.5 bg-white text-[#006A4E] placeholder-[#006A4E]/70
+          border border-gray-200 rounded-full
+          focus:outline-none focus:ring-2 focus:ring-[#006A4E]/40 focus:border-[#006A4E]
+          transition-all duration-200 text-sm font-medium
+          ${iconType ? "pl-12" : "pl-5"}
+          ${type === "password" ? "pr-12" : "pr-5"}
+          ${readOnly ? "cursor-default" : ""}
+        `}
       />
 
-      {/* Toggle Visibilitas Password (Ikon Sisi Kanan) */}
+      {/* Password Toggle */}
       {type === "password" && (
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 focus:outline-none">
+          className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 focus:outline-none"
+        >
           {showPassword ? (
-            <EyeOff className="w-5 h-5 text-gray-400" />
+            <EyeOff className="w-5 h-5" />
           ) : (
-            <Eye className="w-5 h-5 text-gray-400" />
+            <Eye className="w-5 h-5" />
           )}
         </button>
       )}
