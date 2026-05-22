@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../../components/ui/Button";
 import { useMood } from "../../contexts/MoodContext";
+import useWellnessStore from "../../store/useWellnessStore";
 import smallMascot from "../../assets/icons/smallMascot.svg";
 
 export default function DeteksiMood() {
@@ -10,7 +11,13 @@ export default function DeteksiMood() {
   const [detectedMood, setDetectedMood] = useState(null);
   
   const { setTodayMood, MOOD_OPTIONS } = useMood();
+  const setMood = useWellnessStore((s) => s.setMood);
+  const checkAndResetDaily = useWellnessStore((s) => s.checkAndResetDaily);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    checkAndResetDaily();
+  }, [checkAndResetDaily]);
 
   // Simple keyword-based mood detection algorithm
   const detectMood = (text) => {
@@ -44,6 +51,7 @@ export default function DeteksiMood() {
 
   const handleSaveAndContinue = () => {
     if (detectedMood) {
+      setMood(detectedMood);
       setTodayMood(detectedMood);
       navigate("/"); // Go to dashboard
     }

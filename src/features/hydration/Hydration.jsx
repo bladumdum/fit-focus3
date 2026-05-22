@@ -1,13 +1,27 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
+import useWellnessStore from "../../store/useWellnessStore";
 
 export default function Hydration() {
   const GOAL = 2000; // ml
-  const [drank, setDrank] = useState(750);
+  const waterIntake = useWellnessStore((s) => s.waterIntake);
+  const addWater = useWellnessStore((s) => s.addWater);
+  const resetWater = useWellnessStore((s) => s.resetWater);
+  const checkAndResetDaily = useWellnessStore((s) => s.checkAndResetDaily);
+
+  useEffect(() => {
+    checkAndResetDaily();
+  }, [checkAndResetDaily]);
+
+  const drank = Math.min(GOAL, waterIntake * 250);
   const remaining = Math.max(0, GOAL - drank);
 
-  const add = (ml) => setDrank((d) => Math.min(GOAL, d + ml));
+  const add = (glasses) => {
+    for (let i = 0; i < glasses; i += 1) {
+      addWater();
+    }
+  };
 
   // ring
   const R = 56;
@@ -51,9 +65,13 @@ export default function Hydration() {
               <div className="flex-1">
                 <div className="text-sm text-gray-700 mb-3">Add water quickly</div>
                 <div className="flex gap-2 mb-3">
-                  <Button onClick={() => add(250)}>+250 ml</Button>
-                  <Button onClick={() => add(500)}>+500 ml</Button>
+                  <Button onClick={() => add(1)}>+250 ml</Button>
+                  <Button onClick={() => add(2)}>+500 ml</Button>
                 </div>
+                <div className="text-sm text-gray-500 mb-3">Glasses: <span className="text-primary font-semibold">{waterIntake}</span></div>
+                <Button onClick={resetWater} className="w-full">
+                  Reset Water
+                </Button>
                 <div className="text-sm text-gray-500">Remaining: <span className="text-primary font-semibold">{remaining} ml</span></div>
               </div>
             </div>
