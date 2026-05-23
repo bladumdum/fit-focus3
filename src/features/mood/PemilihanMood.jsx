@@ -4,268 +4,185 @@ import { Check } from "lucide-react";
 import semangat from "../../assets/icons/Semangat Emot.svg";
 import biasa from "../../assets/icons/Biasa Aja Emot.svg";
 import lelah from "../../assets/icons/Lelah Emot.svg";
-import { useNavigate } from "react-router-dom";
 import stress from "../../assets/icons/Stress Emot.svg";
-import mascot from "../../assets/icons/mascot.svg";
-import smallMascot from "../../assets/icons/smallMascot.svg";
-import calmingNature from "../../assets/images/calming_nature.png";
+import { useNavigate } from "react-router-dom";
 import useWellnessStore from "../../store/useWellnessStore";
 import { useMood } from "../../contexts/MoodContext";
 import { useTimer } from "../../contexts/TimerContext";
 
+// Mascots & Images for Modals
+import MascotStress from "../../assets/icons/Mascot and Logo (3).svg";
+import MascotBreathe1 from "../../assets/icons/Mascot and Logo (4).svg";
+import MascotBreathe2 from "../../assets/icons/Mascot and Logo (5).svg";
+import MascotCalm from "../../assets/icons/Mascot_and_Logo.svg";
+import MountainImg from "../../assets/icons/05c19052b53ae8a04ee857b82033fdd2b356c53e.jpg";
+import MascotWater from "../../assets/icons/Mascot and Logo (7).svg";
+
 const MOODS = [
   { id: "semangat", label: "Semangat", icon: semangat },
-  { id: "biasa",    label: "Biasa Aja", icon: biasa },
-  { id: "lelah",    label: "Lelah",     icon: lelah },
-  { id: "stress",   label: "Stress",    icon: stress },
+  { id: "biasa", label: "Biasa Aja", icon: biasa },
+  { id: "lelah", label: "Lelah", icon: lelah },
+  { id: "stress", label: "Stress", icon: stress },
 ];
 
-// ── Stress Recovery Popup ──────────────────────────────────────────────────────
-// 5-step flow: Alert → Confirm → Breathing 1 → Breathing 2 → Calming Screen
-function StressPopup({ onFinish, onSkip }) {
-  const [step, setStep] = useState(1);
-
-  const next = () => setStep((s) => s + 1);
-
-  return (
-    // Overlay
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }}
-    >
-      {/* Card */}
-      <div
-        className="w-full max-w-sm bg-white rounded-3xl shadow-2xl p-8 flex flex-col items-center text-center"
-        style={{ animation: "popIn 0.3s cubic-bezier(.34,1.56,.64,1)" }}
-      >
-
-        {/* ── Step 1: Alert ── */}
-        {step === 1 && (
-          <>
-            <img src={mascot} alt="Fico" className="w-28 h-28 object-contain mb-5" />
-            <h2 className="text-xl font-black text-gray-900 mb-3 leading-snug">
-              Sepertinya kamu sedang<br />mengalami stress
-            </h2>
-            <p className="text-sm text-gray-500 mb-7">
-              Yuk, ambil waktu sejenak untuk<br />wellnes recovery
-            </p>
-            <button
-              onClick={next}
-              className="w-full py-3.5 rounded-full bg-[#1B6B45] text-white font-bold text-sm mb-3 hover:bg-[#145236] transition-all active:scale-[0.98]"
-            >
-              Istirahat Dulu
-            </button>
-            <button
-              onClick={onSkip}
-              className="w-full py-3.5 rounded-full border border-gray-300 text-gray-700 font-bold text-sm hover:bg-gray-50 transition-all active:scale-[0.98]"
-            >
-              Nanti Saja
-            </button>
-          </>
-        )}
-
-        {/* ── Step 2: Confirm Relax Mode ── */}
-        {step === 2 && (
-          <>
-            <div className="relative mb-5">
-              <img src={smallMascot} alt="Fico" className="w-28 h-28 object-contain" />
-              <span className="absolute -top-1 -right-3 text-2xl font-black text-gray-900">?</span>
-            </div>
-            <h2 className="text-xl font-black text-gray-900 mb-3">
-              Istirahat Dahulu ?
-            </h2>
-            <p className="text-sm text-gray-500 mb-7">
-              Kamu bisa melakukan Relax Mode<br />untuk merasa lebih tenang
-            </p>
-            <button
-              onClick={next}
-              className="w-full py-3.5 rounded-full bg-[#1B6B45] text-white font-bold text-sm mb-3 hover:bg-[#145236] transition-all active:scale-[0.98]"
-            >
-              Mulai Relax Mode
-            </button>
-            <button
-              onClick={onSkip}
-              className="w-full py-3.5 rounded-full border border-gray-300 text-gray-700 font-bold text-sm hover:bg-gray-50 transition-all active:scale-[0.98]"
-            >
-              Tidak Sekarang
-            </button>
-          </>
-        )}
-
-        {/* ── Step 3: Breathing Exercise — Inhale ── */}
-        {step === 3 && (
-          <>
-            <h2 className="text-xl font-black text-gray-900 mb-5">Breathing Exercise</h2>
-            <div className="flex items-end justify-center gap-4 mb-5">
-              {/* Inhale mascot — hands on cheeks */}
-              <div className="flex flex-col items-center">
-                <img src={mascot} alt="Tarik Nafas" className="w-20 h-20 object-contain opacity-90" />
-                <span className="text-[10px] text-gray-400 mt-1">Tarik Nafas</span>
-              </div>
-              {/* Exhale mascot — mouth open */}
-              <div className="flex flex-col items-center">
-                <img src={smallMascot} alt="Buang Nafas" className="w-20 h-20 object-contain" />
-                <span className="text-[10px] text-gray-400 mt-1">Buang Nafas</span>
-              </div>
-            </div>
-            <p className="text-sm text-gray-500 mb-6">
-              Tarik nafas dalam dan<br />hembuskan perlahan
-            </p>
-            <button
-              onClick={next}
-              className="w-full py-4 rounded-2xl bg-[#1B6B45] text-white font-black text-base mb-3 hover:bg-[#145236] transition-all active:scale-[0.98] leading-tight"
-            >
-              Lakukan sebanyak<br />5x
-            </button>
-            <button
-              onClick={next}
-              className="w-full py-3.5 rounded-full border border-gray-300 text-gray-700 font-bold text-sm hover:bg-gray-50 transition-all active:scale-[0.98]"
-            >
-              Lanjutkan
-            </button>
-          </>
-        )}
-
-        {/* ── Step 4: Breathing Exercise — Repeat ── */}
-        {step === 4 && (
-          <>
-            <h2 className="text-xl font-black text-gray-900 mb-5">Breathing Exercise</h2>
-            <div className="flex items-end justify-center gap-4 mb-5">
-              <div className="flex flex-col items-center">
-                <img src={mascot} alt="Tarik Nafas" className="w-20 h-20 object-contain" style={{ transform: "scaleX(-1)" }} />
-                <span className="text-[10px] text-gray-400 mt-1">Inhale</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <img src={smallMascot} alt="Buang Nafas" className="w-20 h-20 object-contain" />
-                <span className="text-[10px] text-gray-400 mt-1">Exhale</span>
-              </div>
-            </div>
-            <p className="text-sm text-gray-500 mb-6">
-              Tarik nafas dalam dan<br />hembuskan perlahan
-            </p>
-            <button
-              onClick={next}
-              className="w-full py-4 rounded-2xl bg-[#1B6B45] text-white font-black text-base mb-3 hover:bg-[#145236] transition-all active:scale-[0.98] leading-tight"
-            >
-              Lakukan sebanyak<br />5x
-            </button>
-            <button
-              onClick={next}
-              className="w-full py-3.5 rounded-full border border-gray-300 text-gray-700 font-bold text-sm hover:bg-gray-50 transition-all active:scale-[0.98]"
-            >
-              Lanjutkan
-            </button>
-          </>
-        )}
-
-        {/* ── Step 5: Calming Screen ── */}
-        {step === 5 && (
-          <>
-            <h2 className="text-xl font-black text-gray-900 mb-4">Calming Screen</h2>
-            {/* Nature image with mascot overlay */}
-            <div className="relative w-full h-44 mb-5 rounded-2xl overflow-hidden">
-              <img
-                src={calmingNature}
-                alt="Alam Tenang"
-                className="w-full h-full object-cover"
-              />
-              <img
-                src={smallMascot}
-                alt="Fico"
-                className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-16 h-16 object-contain drop-shadow-lg"
-              />
-            </div>
-            <p className="text-sm text-gray-500 mb-7 leading-relaxed">
-              Pikiran yang tenang membantu fokus kembali.<br />
-              Tarik napas perlahan dan nikmati jeda ini.
-            </p>
-            <button
-              onClick={next}
-              className="w-full py-3.5 rounded-full border border-gray-300 text-gray-700 font-bold text-sm hover:bg-gray-50 transition-all active:scale-[0.98]"
-            >
-              Lanjutkan
-            </button>
-          </>
-        )}
-
-        {/* ── Step 6: Water Reminder ── */}
-        {step === 6 && (
-          <>
-            <h2 className="text-xl font-black text-gray-900 mb-6">Water Reminder</h2>
-            {/* Mascot + glass of water */}
-            <div className="flex items-center justify-center gap-2 mb-6">
-              <img src={mascot} alt="Fico" className="w-28 h-28 object-contain" />
-              {/* Water glass icon */}
-              <svg width="48" height="56" viewBox="0 0 48 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="6" y="4" width="36" height="48" rx="4" fill="#60A5FA" />
-                <rect x="6" y="28" width="36" height="24" rx="4" fill="#3B82F6" />
-                <rect x="10" y="8" width="6" height="3" rx="1.5" fill="white" opacity="0.5" />
-              </svg>
-            </div>
-            <p className="text-lg font-black text-gray-900 mb-2">
-              Jangan lupa minum air putih ya!
-            </p>
-            <p className="text-sm text-gray-500 mb-8">
-              Tubuh yang terhidrasi membantu otak tetap fokus
-            </p>
-            <button
-              onClick={onFinish}
-              className="w-full py-3.5 rounded-full border border-gray-300 text-gray-700 font-bold text-sm hover:bg-gray-50 transition-all active:scale-[0.98]"
-            >
-              Selesai
-            </button>
-          </>
-        )}
-      </div>
-
-      <style>{`
-        @keyframes popIn {
-          from { opacity: 0; transform: scale(0.85); }
-          to   { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
-    </div>
-  );
-}
-
-// ── Main Component ─────────────────────────────────────────────────────────────
 export default function PemilihanMood() {
-  const [selected, setSelected]         = useState(null);
-  const [showStressPopup, setShowStressPopup] = useState(false);
+  const [selected, setSelected] = useState(null);
+  const [stressStep, setStressStep] = useState(0); // 0 = None, 1 = Prompt, 2 = Breathing, 3 = Calming
 
-  const navigate        = useNavigate();
-  const setMoodStore    = useWellnessStore((s) => s.setMood);
+  const navigate = useNavigate();
+  const setMoodStore = useWellnessStore((s) => s.setMood);
   const { setTodayMood } = useMood();
   const { setPresetByMood } = useTimer();
-
-  /** Simpan mood + set timer preset, lalu navigasi */
-  const commitAndNavigate = (moodId) => {
-    setMoodStore(moodId);
-    setTodayMood(moodId);
-    setPresetByMood(moodId);
-    localStorage.setItem("mood_selected", "true");
-    navigate("/");
-  };
 
   const handleConfirm = () => {
     if (!selected) return;
 
-    if (selected === "stress") {
-      // Simpan mood dulu, tapi tahan navigasi — tampilkan stress flow
-      setMoodStore(selected);
-      setTodayMood(selected);
-      setPresetByMood(selected);
-      setShowStressPopup(true);
-    } else {
-      commitAndNavigate(selected);
+    if (selected === "stress" && stressStep === 0) {
+      setStressStep(1);
+      return;
     }
+
+    finishConfirm();
+  };
+
+  const finishConfirm = () => {
+    setMoodStore(selected);
+    setTodayMood(selected);
+    setPresetByMood(selected);
+    localStorage.setItem("mood_selected", "true");
+    navigate("/");
   };
 
   const toggle = (id) => setSelected((p) => (p === id ? null : id));
 
+  // UI Components for the Stress Modals
+  const renderStressModal = () => {
+    if (stressStep === 0) return null;
+
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ backgroundColor: "#F6F4DD" }}>
+        <div className="bg-white rounded-[32px] p-8 w-full max-w-sm shadow-xl flex flex-col items-center text-center">
+
+          {/* STEP 1: PROMPT */}
+          {stressStep === 1 && (
+            <>
+              <img src={MascotStress} alt="Stress" className="w-24 h-24 mb-6 object-contain" />
+              <h2 className="text-xl font-bold text-gray-900 leading-snug mb-3">
+                Sepertinya kamu sedang<br />mengalami stress
+              </h2>
+              <p className="text-sm font-medium text-gray-700 mb-8">
+                Yuk, ambil waktu sejenak untuk<br />wellness recovery
+              </p>
+              <div className="w-full flex flex-col gap-3 px-2">
+                <button
+                  onClick={() => setStressStep(2)}
+                  className="w-full py-3 rounded-xl bg-[#027A48] text-white font-semibold shadow-sm hover:bg-[#02663b] transition-colors"
+                >
+                  Istirahat Dulu
+                </button>
+                <button
+                  onClick={finishConfirm}
+                  className="w-full py-3 rounded-xl bg-white border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  Nanti Saja
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* STEP 2: BREATHING */}
+          {stressStep === 2 && (
+            <>
+              <h2 className="text-xl font-bold text-gray-900 mb-6">
+                Breathing Exercise
+              </h2>
+              <div className="flex items-end justify-center gap-4 mb-6">
+                <img src={MascotBreathe1} alt="Breathe In" className="w-24 h-24 object-contain" />
+                <img src={MascotBreathe2} alt="Breathe Out" className="w-24 h-24 object-contain" />
+              </div>
+              <p className="text-sm font-medium text-gray-700 mb-8">
+                Tarik nafas dalam dan<br />hembuskan perlahan
+              </p>
+              <div className="w-full flex flex-col gap-3 px-2">
+                <div className="w-full py-2.5 rounded-xl bg-[#027A48] text-white flex flex-col items-center justify-center shadow-sm">
+                  <span className="font-semibold">Lakukan sebanyak</span>
+                  <span className="font-bold">5x</span>
+                </div>
+                <button
+                  onClick={() => setStressStep(3)}
+                  className="w-full py-3 rounded-xl bg-white border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  Lanjutkan
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* STEP 3: CALMING */}
+          {stressStep === 3 && (
+            <>
+              <h2 className="text-xl font-bold text-gray-900 mb-6">
+                Calming Screen
+              </h2>
+              <div className="relative mb-10 mt-2 flex justify-center">
+                <div className="w-48 h-48 overflow-hidden rounded-xl">
+                  <img src={MountainImg} alt="Mountain" className="w-full h-full object-cover" />
+                </div>
+                <img
+                  src={MascotCalm}
+                  alt="Calm Mascot"
+                  className="w-24 h-24 absolute -bottom-10 object-contain drop-shadow-md"
+                />
+              </div>
+              <p className="text-sm font-medium text-gray-700 mb-8 mt-4">
+                Pikiran yang tenang membantu fokus kembali.<br />
+                Tarik napas perlahan dan nikmati jeda ini.
+              </p>
+              <div className="w-full px-2">
+                <button
+                  onClick={() => setStressStep(4)}
+                  className="w-full py-3 rounded-xl bg-white border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  Lanjutkan
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* STEP 4: WATER REMINDER */}
+          {stressStep === 4 && (
+            <>
+              <h2 className="text-xl font-bold text-gray-900 mb-6 mt-2">
+                Water Reminder
+              </h2>
+              <img src={MascotWater} alt="Water Reminder" className="w-32 h-32 mb-8 object-contain drop-shadow-sm" />
+              <p className="text-lg font-medium text-gray-900 mb-3 px-2">
+                Jangan lupa minum air putih ya!
+              </p>
+              <p className="text-sm font-medium text-gray-700 mb-10 px-2">
+                Tubuh yang terhidrasi membantu otak tetap fokus
+              </p>
+              <div className="w-full px-2">
+                <button
+                  onClick={finishConfirm}
+                  className="w-full py-3 rounded-xl bg-white border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  Selesai
+                </button>
+              </div>
+            </>
+          )}
+
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F6F4DD] p-6">
-      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-8">
+    <div className="min-h-screen flex items-center justify-center bg-[#F6F4DD] p-6 relative overflow-hidden">
+      {renderStressModal()}
+
+      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-8 relative z-10">
         <header className="mb-6">
           <h1 className="text-2xl font-bold text-[#0f172a]">
             Bagaimana perasaanmu sekarang?
@@ -284,10 +201,8 @@ export default function PemilihanMood() {
                   key={m.id}
                   type="button"
                   onClick={() => toggle(m.id)}
-                  className={`relative flex flex-col items-center justify-between p-4 h-44 bg-[#FAFAFA] rounded-2xl transition-shadow duration-150 border ${
-                    active ? "ring-4 ring-primary bg-white" : "hover:shadow-md"
-                  }`}
-                >
+                  className={`relative flex flex-col items-center justify-between p-4 h-44 bg-[#FAFAFA] rounded-2xl transition-shadow duration-150 border ${active ? "ring-4 ring-primary bg-white" : "hover:shadow-md"
+                    }`}>
                   <div className="mt-2">
                     <img src={m.icon} alt={m.label} className="w-20 h-20 object-contain" />
                   </div>

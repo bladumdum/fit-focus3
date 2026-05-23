@@ -3,33 +3,27 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 const TimerContext = createContext(null);
 
 export const PRESETS = [
-  { id: "pomodoro",      label: "Pomodoro",      minutes: 25 },
-  { id: "short",         label: "Short Break",    minutes: 5  },
-  { id: "long",          label: "Long Break",     minutes: 15 },
-  { id: "fokus-ringan",  label: "Fokus Ringan",   minutes: 10 },
+  { id: "pomodoro", label: "Pomodoro", minutes: 25 },
+  { id: "short", label: "Short Break", minutes: 5 },
+  { id: "long", label: "Long Break", minutes: 15 },
+  { id: "fokus-ringan", label: "Fokus Ringan", minutes: 10 },
 ];
 
-// Mapping mood → preset id
-// semangat  → 25 menit (Pomodoro penuh)
-// biasa      → 15 menit (Long Break / fokus sedang)
-// biasaaja   → 15 menit (alias biasa)
-// lelah      → 10 menit (Fokus Ringan)
-// stress     → 10 menit (Fokus Ringan, istirahat pendek)
 export const MOOD_PRESET_MAP = {
   semangat: "pomodoro",
-  biasa:     "long",
-  biasaaja:  "long",
-  lelah:     "fokus-ringan",
-  stress:    "fokus-ringan",
+  biasa: "long",
+  biasaaja: "long",
+  lelah: "fokus-ringan",
+  stress: "fokus-ringan",
 };
 
 export function TimerProvider({ children }) {
-  const [preset, setPreset]           = useState(PRESETS[0]);
-  const [running, setRunning]         = useState(false);
-  const [remaining, setRemaining]     = useState(PRESETS[0].minutes * 60);
+  const [preset, setPreset] = useState(PRESETS[0]);
+  const [running, setRunning] = useState(false);
+  const [remaining, setRemaining] = useState(PRESETS[0].minutes * 60);
   const [showTimeout, setShowTimeout] = useState(false);
-  const [showPopup, setShowPopup]     = useState(false);
-  const intervalRef                   = useRef(null);
+  const [showPopup, setShowPopup] = useState(false);
+  const intervalRef = useRef(null);
 
   // Reset when preset changes
   useEffect(() => {
@@ -72,11 +66,10 @@ export function TimerProvider({ children }) {
     setShowTimeout(true);
   }, []);
 
-  const total    = preset.minutes * 60;
+  const total = preset.minutes * 60;
   const progress = 1 - remaining / total; // 0 → 1
   const nextBreakMin = Math.ceil(remaining / 60);
 
-  /** Set preset timer berdasarkan mood pengguna */
   const setPresetByMood = useCallback((moodId) => {
     const presetId = MOOD_PRESET_MAP[moodId] ?? "pomodoro";
     const found = PRESETS.find((p) => p.id === presetId) ?? PRESETS[0];
