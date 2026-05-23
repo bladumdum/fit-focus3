@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import stress from "../../assets/icons/Stress Emot.svg";
 import useWellnessStore from "../../store/useWellnessStore";
 import { useMood } from "../../contexts/MoodContext";
+import { useTimer } from "../../contexts/TimerContext";
 
 const MOODS = [
   { id: "semangat", label: "Semangat", icon: semangat },
@@ -20,8 +21,9 @@ export default function PemilihanMood() {
   const [selected, setSelected] = useState(null);
 
   const navigate = useNavigate();
-  const setMoodStore  = useWellnessStore((s) => s.setMood);
+  const setMoodStore = useWellnessStore((s) => s.setMood);
   const { setTodayMood } = useMood();
+  const { setPresetByMood } = useTimer();
 
   const handleConfirm = () => {
     if (!selected) return;
@@ -30,6 +32,10 @@ export default function PemilihanMood() {
     setMoodStore(selected);
     // Sync ke in-memory MoodContext juga
     setTodayMood(selected);
+
+    // Sesuaikan timer preset di dashboard berdasarkan mood yang dipilih
+    setPresetByMood(selected);
+
     // Flag untuk ProtectedRoute agar mengizinkan akses ke dashboard
     localStorage.setItem("mood_selected", "true");
 
@@ -61,9 +67,8 @@ export default function PemilihanMood() {
                   key={m.id}
                   type="button"
                   onClick={() => toggle(m.id)}
-                  className={`relative flex flex-col items-center justify-between p-4 h-44 bg-[#FAFAFA] rounded-2xl transition-shadow duration-150 border ${
-                    active ? "ring-4 ring-primary bg-white" : "hover:shadow-md"
-                  }`}>
+                  className={`relative flex flex-col items-center justify-between p-4 h-44 bg-[#FAFAFA] rounded-2xl transition-shadow duration-150 border ${active ? "ring-4 ring-primary bg-white" : "hover:shadow-md"
+                    }`}>
                   <div className="mt-2">
                     <img
                       src={m.icon}

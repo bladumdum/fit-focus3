@@ -3,10 +3,19 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 const TimerContext = createContext(null);
 
 export const PRESETS = [
-  { id: "pomodoro", label: "Pomodoro", minutes: 25 },
-  { id: "short",    label: "Short Break", minutes: 5 },
-  { id: "long",     label: "Long Break", minutes: 15 },
+  { id: "pomodoro",      label: "Pomodoro",      minutes: 25 },
+  { id: "short",         label: "Short Break",    minutes: 5  },
+  { id: "long",          label: "Long Break",     minutes: 15 },
+  { id: "fokus-ringan",  label: "Fokus Ringan",   minutes: 10 },
 ];
+
+export const MOOD_PRESET_MAP = {
+  semangat: "pomodoro",
+  biasa:     "long",
+  biasaaja:  "long",
+  lelah:     "fokus-ringan",
+  stress:    "fokus-ringan",
+};
 
 export function TimerProvider({ children }) {
   const [preset, setPreset]           = useState(PRESETS[0]);
@@ -61,6 +70,12 @@ export function TimerProvider({ children }) {
   const progress = 1 - remaining / total; // 0 → 1
   const nextBreakMin = Math.ceil(remaining / 60);
 
+  const setPresetByMood = useCallback((moodId) => {
+    const presetId = MOOD_PRESET_MAP[moodId] ?? "pomodoro";
+    const found = PRESETS.find((p) => p.id === presetId) ?? PRESETS[0];
+    setPreset(found);
+  }, []);
+
   const value = {
     preset, setPreset,
     running, setRunning,
@@ -68,8 +83,10 @@ export function TimerProvider({ children }) {
     showTimeout, setShowTimeout,
     showPopup, setShowPopup,
     handleStartPause, handleReset, handleFinishNow,
+    setPresetByMood,
     progress, nextBreakMin,
-    PRESETS
+    PRESETS,
+    MOOD_PRESET_MAP,
   };
 
   return (
